@@ -3,29 +3,57 @@ package kr.codingtree.seonconfig;
 import kr.codingtree.seonconfig.section.ConfigSection;
 
 import java.io.File;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class Config implements ConfigSection {
 
+    private LinkedHashMap<String, Object> dataMap = new LinkedHashMap<>();
+
     @Override
     public void set(String key, Object value) {
+        String[] keys = key.split("\\.");
+        LinkedHashMap<String, Object> map = dataMap;
 
+        for (int i = 0; i < keys.length - 1; i++) {
+            Object obj = map.get(keys[i]);
+
+            if (obj instanceof LinkedHashMap) {
+                map = (LinkedHashMap) obj;
+            } else {
+                map.put(keys[i], map = new LinkedHashMap<>());
+            }
+        }
+        map.put(keys[keys.length - 1], value);
     }
 
     @Override
     public void set(Map<String, Object> map) {
-
+        dataMap.putAll(map);
     }
 
     @Override
     public boolean contains(String key) {
-        return false;
+        String[] keys = key.split("\\.");
+        LinkedHashMap<String, Object> map = dataMap;
+
+        for (int i = 0; i < keys.length - 1; i++) {
+            Object obj = map.get(keys[i]);
+
+            if (obj instanceof LinkedHashMap) {
+                map = (LinkedHashMap) obj;
+            } else {
+                return false;
+            }
+        }
+        return map.containsKey(keys[keys.length - 1]);
     }
 
     @Override
     public void clear() {
-
+        dataMap.clear();
     }
 
     @Override
@@ -44,13 +72,29 @@ public class Config implements ConfigSection {
     }
 
     @Override
-    public List<String> getKeys() {
-        return null;
+    public Set<String> getKeys() {
+        return dataMap.keySet();
     }
 
     @Override
-    public List<String> getKeys(String key) {
-        return null;
+    public Set<String> getKeys(String key) {
+        if (key.contains(".")) {
+            String[] keys = key.split("\\.");
+            LinkedHashMap<String, Object> map = dataMap;
+
+            for (int i = 0; i < keys.length - 1; i++) {
+                Object obj = map.get(keys[i]);
+
+                if (obj instanceof LinkedHashMap) {
+                    map = (LinkedHashMap) obj;
+                } else {
+                    return false;
+                }
+            }
+            return map.containsKey(keys[keys.length - 1]);
+        } else {
+            return getKeys();
+        }
     }
 
     @Override

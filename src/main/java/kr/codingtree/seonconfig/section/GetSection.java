@@ -1,11 +1,12 @@
 package kr.codingtree.seonconfig.section;
 
 import java.util.List;
+import java.util.Set;
 
 public interface GetSection {
 
-    List<String> getKeys();
-    List<String> getKeys(String key);
+    Set<String> getKeys();
+    Set<String> getKeys(String key);
 
     Object get(String key);
     List<?> getList(String key);

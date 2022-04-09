@@ -1,11 +1,11 @@
 package kr.codingtree.seonconfig;
 
 import kr.codingtree.seonconfig.section.DefaultSection;
-
 import lombok.NonNull;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 
 public class DefaultConfig implements DefaultSection {
 
@@ -13,7 +13,19 @@ public class DefaultConfig implements DefaultSection {
 
     @Override
     public void addDefault(@NonNull String key, Object value) {
-        defaults.put(key, value);
+        String[] keys = key.split("\\.");
+        LinkedHashMap<String, Object> map = defaults;
+
+        for (int i = 0; i < keys.length - 1; i++) {
+            Object obj = map.get(keys[i]);
+
+            if (obj instanceof LinkedHashMap) {
+                map = (LinkedHashMap) obj;
+            } else {
+                map.put(keys[i], map = new LinkedHashMap<>());
+            }
+        }
+        map.put(keys[keys.length - 1], value);
     }
 
     @Override
@@ -28,12 +40,23 @@ public class DefaultConfig implements DefaultSection {
 
     @Override
     public boolean isDefault(String key) {
-        return defaults.containsValue(key);
+        String[] keys = key.split("\\.");
+        LinkedHashMap<String, Object> map = defaults;
+
+        for (int i = 0; i < keys.length - 1; i++) {
+            Object obj = map.get(keys[i]);
+
+            if (obj instanceof LinkedHashMap) {
+                map = (LinkedHashMap) obj;
+            } else {
+                return false;
+            }
+        }
+        return map.containsKey(keys[keys.length - 1]);
     }
 
     @Override
     public void clearDefaults() {
         defaults.clear();
     }
-
 }
