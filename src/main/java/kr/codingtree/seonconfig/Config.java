@@ -1,170 +1,244 @@
 package kr.codingtree.seonconfig;
 
 import kr.codingtree.seonconfig.section.ConfigSection;
+import lombok.Getter;
+import lombok.NonNull;
 
-import java.io.File;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-public class Config implements ConfigSection {
+public class Config extends DefaultConfig implements ConfigSection {
 
-    private LinkedHashMap<String, Object> dataMap = new LinkedHashMap<>();
+    @Getter
+    protected HashMap<String, Object> values = new HashMap<>();
 
     @Override
-    public void set(String key, Object value) {
-        String[] keys = key.split("\\.");
-        LinkedHashMap<String, Object> map = dataMap;
+    public List<String> getKeys() {
+        ArrayList<String> list = new ArrayList<>();
 
-        for (int i = 0; i < keys.length - 1; i++) {
-            Object obj = map.get(keys[i]);
+        Iterator<String> iterator = values.keySet().iterator();
+        while (iterator.hasNext()) {
+            String s = iterator.next();
 
-            if (obj instanceof LinkedHashMap) {
-                map = (LinkedHashMap) obj;
-            } else {
-                map.put(keys[i], map = new LinkedHashMap<>());
+            if (!s.contains(".") && !list.contains(s)) {
+                list.add(s);
+            }
+
+        }
+        return list;
+    }
+    @Override
+    public List<String> getKeys(String key) {
+        if (key == null) {
+            throw new NullPointerException("key is marked non-null but is null");
+        }
+
+        ArrayList<String> list = new ArrayList<>();
+
+        Iterator<String> iterator = values.keySet().iterator();
+        while (iterator.hasNext()) {
+            String s = iterator.next();
+
+            if (s.startsWith(key + ".")) {
+                s = s.substring(key.length() + 1);
+
+                if (s.contains(".")) {
+                    s = s.substring(0, s.indexOf("."));
+                }
+                if (!list.contains(s)) {
+                    list.add(s);
+                }
             }
         }
-        map.put(keys[keys.length - 1], value);
+        return list;
     }
 
     @Override
-    public void set(Map<String, Object> map) {
-        dataMap.putAll(map);
+    public void set(String key, Object value) {
+        if (key == null) {
+            throw new NullPointerException("key is marked non-null but is null");
+        }
+    }
+    @Override
+    public void addAll(Map<String, Object> map) {
+
     }
 
     @Override
     public boolean contains(String key) {
-        String[] keys = key.split("\\.");
-        LinkedHashMap<String, Object> map = dataMap;
-
-        for (int i = 0; i < keys.length - 1; i++) {
-            Object obj = map.get(keys[i]);
-
-            if (obj instanceof LinkedHashMap) {
-                map = (LinkedHashMap) obj;
-            } else {
-                return false;
-            }
+        if (key == null) {
+            throw new NullPointerException("key is marked non-null but is null");
         }
-        return map.containsKey(keys[keys.length - 1]);
+
+        return false;
     }
 
     @Override
-    public void clear() {
-        dataMap.clear();
+    public boolean isList(String key) {
+        return false;
     }
-
     @Override
-    public void load(File file) {
-
+    public boolean isString(String key) {
+        return false;
     }
-
     @Override
-    public void save(File file) {
-
+    public boolean isBoolean(String key) {
+        return false;
     }
-
     @Override
-    public String saveToString() {
-        return null;
+    public boolean isShort(String key) {
+        return false;
     }
-
     @Override
-    public Set<String> getKeys() {
-        return dataMap.keySet();
+    public boolean isInt(String key) {
+        return false;
     }
-
     @Override
-    public Set<String> getKeys(String key) {
-        if (key.contains(".")) {
-            String[] keys = key.split("\\.");
-            LinkedHashMap<String, Object> map = dataMap;
-
-            for (int i = 0; i < keys.length - 1; i++) {
-                Object obj = map.get(keys[i]);
-
-                if (obj instanceof LinkedHashMap) {
-                    map = (LinkedHashMap) obj;
-                } else {
-                    return false;
-                }
-            }
-            return map.containsKey(keys[keys.length - 1]);
-        } else {
-            return getKeys();
-        }
+    public boolean isLong(String key) {
+        return false;
+    }
+    @Override
+    public boolean isFloat(String key) {
+        return false;
+    }
+    @Override
+    public boolean isDouble(String key) {
+        return false;
     }
 
     @Override
     public Object get(String key) {
         return null;
     }
+    @Override
+    public String getString(String key) {
+        return null;
+    }
+    @Override
+    public boolean getBoolean(String key) {
+        return false;
+    }
+    @Override
+    public short getShort(String key) {
+        return 0;
+    }
+    @Override
+    public int getInt(String key) {
+        return 0;
+    }
+    @Override
+    public long getLong(String key) {
+        return 0;
+    }
+    @Override
+    public float getFloat(String key) {
+        return 0;
+    }
+    @Override
+    public double getDouble(String key) {
+        return 0;
+    }
 
     @Override
     public List<?> getList(String key) {
         return null;
     }
-
-    @Override
-    public String getString(String key) {
-        return null;
-    }
-
     @Override
     public List<String> getStringList(String key) {
         return null;
     }
-
     @Override
-    public Integer getInt(String key) {
+    public List<Boolean> getBooleanList(String key) {
         return null;
     }
-
-    @Override
-    public List<Integer> getIntegerList(String key) {
-        return null;
-    }
-
-    @Override
-    public Long getLong(String key) {
-        return null;
-    }
-
-    @Override
-    public List<Long> getLongList(String key) {
-        return null;
-    }
-
-    @Override
-    public Short getShort(String key) {
-        return null;
-    }
-
     @Override
     public List<Short> getShortList(String key) {
         return null;
     }
-
     @Override
-    public Float getFloat(String key) {
+    public List<Integer> getIntegerList(String key) {
         return null;
     }
-
+    @Override
+    public List<Long> getLongList(String key) {
+        return null;
+    }
     @Override
     public List<Float> getFloatList(String key) {
         return null;
     }
-
-    @Override
-    public Double getDouble(String key) {
-        return null;
-    }
-
     @Override
     public List<Double> getDoubleList(String key) {
         return null;
     }
 
+    @Override
+    public Object get(String key, Object def) {
+        return null;
+    }
+    @Override
+    public String getString(String key, String def) {
+        return null;
+    }
+    @Override
+    public boolean getBoolean(String key, boolean def) {
+        return false;
+    }
+    @Override
+    public short getShort(String key, short def) {
+        return 0;
+    }
+    @Override
+    public int getInt(String key, int def) {
+        return 0;
+    }
+    @Override
+    public long getLong(String key, long def) {
+        return 0;
+    }
+    @Override
+    public float getFloat(String key, float def) {
+        return 0;
+    }
+    @Override
+    public double getDouble(String key, double def) {
+        return 0;
+    }
+
+    @Override
+    public List<?> getList(String key, List<?> def) {
+        return null;
+    }
+    @Override
+    public List<String> getStringList(String key, List<String> def) {
+        return null;
+    }
+    @Override
+    public List<Boolean> getBooleanList(String key, List<Boolean> def) {
+        return null;
+    }
+    @Override
+    public List<Short> getShortList(String key, List<Short> def) {
+        return null;
+    }
+    @Override
+    public List<Integer> getIntegerList(String key, List<Integer> def) {
+        return null;
+    }
+    @Override
+    public List<Long> getLongList(String key, List<Long> def) {
+        return null;
+    }
+    @Override
+    public List<Float> getFloatList(String key, List<Float> def) {
+        return null;
+    }
+    @Override
+    public List<Double> getDoubleList(String key, List<Double> def) {
+        return null;
+    }
+
+    @Override
+    public String saveToString() {
+        return null;
+    }
 }

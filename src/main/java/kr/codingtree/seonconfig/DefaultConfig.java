@@ -1,62 +1,55 @@
 package kr.codingtree.seonconfig;
 
 import kr.codingtree.seonconfig.section.DefaultSection;
+
+import lombok.Getter;
 import lombok.NonNull;
 
-import java.util.LinkedHashMap;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-
 
 public class DefaultConfig implements DefaultSection {
 
-    private LinkedHashMap<String, Object> defaults = new LinkedHashMap<>();
+    @Getter
+    protected HashMap<String, Object> defaults = new HashMap<>();
 
-    @Override
-    public void addDefault(@NonNull String key, Object value) {
-        String[] keys = key.split("\\.");
-        LinkedHashMap<String, Object> map = defaults;
+    public void addDefault(String key, Object value) {
+        if (key == null) {
+            throw new NullPointerException("key is marked non-null but is null");
+        }
 
-        for (int i = 0; i < keys.length - 1; i++) {
-            Object obj = map.get(keys[i]);
+        String pkey = key + ".";
 
-            if (obj instanceof LinkedHashMap) {
-                map = (LinkedHashMap) obj;
-            } else {
-                map.put(keys[i], map = new LinkedHashMap<>());
+        Iterator<String> iterator = defaults.keySet().iterator();
+
+        while (iterator.hasNext()) {
+            String s = iterator.next();
+
+            if (s.length() > 0 && s.startsWith(pkey)) {
+
             }
         }
-        map.put(keys[keys.length - 1], value);
-    }
 
-    @Override
+        defaults.put(key, value);
+    }
     public void addDefaults(Map<String, Object> map) {
         defaults.putAll(map);
     }
 
-    @Override
-    public Map<String, Object> getDefaults() {
-        return defaults;
+    public Object getDefault(String key) {
+        return defaults.get(key);
     }
 
-    @Override
     public boolean isDefault(String key) {
-        String[] keys = key.split("\\.");
-        LinkedHashMap<String, Object> map = defaults;
-
-        for (int i = 0; i < keys.length - 1; i++) {
-            Object obj = map.get(keys[i]);
-
-            if (obj instanceof LinkedHashMap) {
-                map = (LinkedHashMap) obj;
-            } else {
-                return false;
-            }
+        if (key == null) {
+            throw new NullPointerException("key is marked non-null but is null");
         }
-        return map.containsKey(keys[keys.length - 1]);
+        return defaults.containsKey(key);
     }
 
-    @Override
     public void clearDefaults() {
         defaults.clear();
     }
+
 }
