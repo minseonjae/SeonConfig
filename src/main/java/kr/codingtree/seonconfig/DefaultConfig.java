@@ -3,38 +3,36 @@ package kr.codingtree.seonconfig;
 import kr.codingtree.seonconfig.section.DefaultSection;
 
 import lombok.Getter;
-import lombok.NonNull;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class DefaultConfig implements DefaultSection {
 
     @Getter
-    protected HashMap<String, Object> defaults = new HashMap<>();
+    protected HashMap<String, Object> defaults = new LinkedHashMap<>();
 
     public void addDefault(String key, Object value) {
-        if (key == null) {
+        if (key == null || key.length() < 1) {
             throw new NullPointerException("key is marked non-null but is null");
         }
-
-        String pkey = key + ".";
 
         Iterator<String> iterator = defaults.keySet().iterator();
 
         while (iterator.hasNext()) {
-            String s = iterator.next();
+            String ikey = iterator.next();
 
-            if (s.length() > 0 && s.startsWith(pkey)) {
-
+            if (ikey.startsWith(key + ".")) {
+                iterator.remove();
             }
         }
 
         defaults.put(key, value);
     }
     public void addDefaults(Map<String, Object> map) {
-        defaults.putAll(map);
+        map.forEach((key, value) -> addDefault(key, value));
     }
 
     public Object getDefault(String key) {
@@ -42,7 +40,7 @@ public class DefaultConfig implements DefaultSection {
     }
 
     public boolean isDefault(String key) {
-        if (key == null) {
+        if (key == null || key.length() < 1) {
             throw new NullPointerException("key is marked non-null but is null");
         }
         return defaults.containsKey(key);
