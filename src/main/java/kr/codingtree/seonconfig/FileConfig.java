@@ -11,39 +11,38 @@ import java.util.Map;
 
 public abstract class FileConfig extends MemoryConfig implements FileSection {
 
-    @SneakyThrows(IOException.class)
-    private void createFile(File file) {
-        if (!file.exists()) {
-            new File(file.getPath().substring(0, file.getPath().lastIndexOf("\\"))).mkdirs();
-            file.createNewFile();
-        }
-    }
-
     @Override
     @SneakyThrows(IOException.class)
     public void load(File file) {
-        createFile(file);
+        if (!file.exists()) {
+            save(file);
+        }
 
         @Cleanup FileInputStream fis = new FileInputStream(file);
         @Cleanup InputStreamReader isr = new InputStreamReader(fis, "UTF-8");
         @Cleanup BufferedReader br = new BufferedReader(isr);
 
-        StringWriter writer = new StringWriter();
+        StringBuilder sb = new StringBuilder();
 
         String line;
-        while ((line = br.readLine()) != null) writer.write(line);
+        while ((line = br.readLine()) != null) sb.append(line + "\n");
 
         values.clear();
 
-        HashMap<String, Object> map = stringToMap(writer.toString());
+        HashMap<String, Object> map = stringToMap(sb.toString());
 
         valuesToDot(null, values, map);
+
+        if (defaults.size() > 0) save(file);
     }
 
     @Override
     @SneakyThrows(IOException.class)
     public void save(File file) {
-        createFile(file);
+        if (!file.exists()) {
+            if (file.getPath().contains("\\")) new File(file.getPath().substring(0, file.getPath().lastIndexOf("\\"))).mkdirs();
+            file.createNewFile();
+        }
 
         @Cleanup FileOutputStream fos = new FileOutputStream(file);
         @Cleanup OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
@@ -56,7 +55,7 @@ public abstract class FileConfig extends MemoryConfig implements FileSection {
         loadValues.forEach((key, value) -> {
             String pkey;
 
-            if (parentKey == null) {
+            if (parentKey != null) {
                 pkey = parentKey + "." + key;
             } else {
                 pkey = key;
@@ -70,31 +69,38 @@ public abstract class FileConfig extends MemoryConfig implements FileSection {
         });
     }
 
+    protected HashMap<String, Object> addDefaultValues(HashMap<String, Object> originalMap) {
+        HashMap<String, Object> map = new LinkedHashMap<>(originalMap);
+
+        defaults.forEach((key, value) -> {
+            if (!originalMap.containsKey(key)) {
+                map.put(key, value);
+            }
+        });
+
+        return map;
+    }
     protected HashMap<String, Object> organizedMap(HashMap<String, Object> originalMap) {
         HashMap<String, Object> map = new LinkedHashMap<>();
 
         originalMap.forEach((key, value) -> {
             if (key.contains(".")) {
                 String[] keySplit = key.split("\\.");
-                HashMap<String, Object> parent = null,
-                        child = null;
+
+                HashMap<String, Object> parent = null, child = null;
 
                 for (int i = 0; i < keySplit.length; i++) {
                     String childName = keySplit[i];
-                    Object childObject = i < 1 ? originalMap.get(childName) : child.get(childName);
+                    Object childObject = i < 1 ? map.get(childName) : child.get(childName);
 
                     if (i < 1) {
-                        if (childObject instanceof HashMap || childObject == null) {
-                            parent = childObject == null ? new LinkedHashMap<>() : (HashMap<String, Object>) childObject;
-                            child = parent;
-                        } else {
-                            break;
-                        }
-                    } else if (i == keySplit.length - 1) {
+                        parent = (childObject == null ? new LinkedHashMap<>() : (HashMap<String, Object>) childObject);
+                        child = parent;
+                    } else if (i >= keySplit.length - 1) {
                         child.put(childName, value);
                         map.put(keySplit[0], parent);
                     } else if (childObject instanceof HashMap || childObject == null) {
-                        HashMap<String, Object> tempChild = childObject == null ? new LinkedHashMap<>() : (HashMap<String, Object>) childObject;
+                        HashMap<String, Object> tempChild = (childObject == null ? new LinkedHashMap<>() : (HashMap<String, Object>) childObject);
                         child.put(childName, child = tempChild);
                     }
                 }

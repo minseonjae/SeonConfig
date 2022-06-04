@@ -1,7 +1,6 @@
 package kr.codingtree.seonconfig.serializer.bukkit;
 
 import kr.codingtree.seonconfig.serializer.ValueSerializer;
-
 import org.bukkit.inventory.ItemStack;
 
 public class ItemStackSerializer extends ValueSerializer<ItemStack> {

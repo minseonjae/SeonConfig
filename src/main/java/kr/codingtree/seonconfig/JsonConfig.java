@@ -14,7 +14,7 @@ public class JsonConfig extends FileConfig {
                 .setPrettyPrinting()
                 .disableHtmlEscaping()
                 .create()
-                .toJson(organizedMap(values));
+                .toJson(organizedMap(addDefaultValues(values)));
     }
 
     @Override

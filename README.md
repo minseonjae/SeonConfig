@@ -1,12 +1,16 @@
 # SeonConfig
 
 ## Example
-### TestPlugin.java
+### YamlConfig Example
 ``` Java
-public class TestPlugin extends JavaPlugin {
-    @Override
-    public void onEnable() {
+public class TestClass {
+
+    public static void main(String[] args) {
+        YamlConfig config = new YamlConfig(new File("config.yml"));
+        config.load();
+        config.save();
     }
+    
 }
 ```
 
