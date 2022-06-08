@@ -1,7 +1,7 @@
 package kr.codingtree.seonconfig.serializer;
 
 import lombok.Getter;
-import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 
 import java.util.ArrayList;
@@ -12,6 +12,14 @@ public class Serializers {
     @Getter
     private ArrayList<ValueSerializer> list = new ArrayList<>();
 
+    @SneakyThrows(Exception.class)
+    public boolean register(Class<? extends ValueSerializer> serializer) {
+        if (isRegistered(serializer)) {
+            return false;
+        }
+        list.add(serializer.newInstance());
+        return true;
+    }
     public boolean register(ValueSerializer<?> serializer) {
         if (isRegistered(serializer)) {
             return false;

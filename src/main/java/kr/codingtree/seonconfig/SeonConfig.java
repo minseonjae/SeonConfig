@@ -53,7 +53,6 @@ public class SeonConfig {
                 ConfigName configName = field.getAnnotation(ConfigName.class);
 
                 if (value instanceof Map) {
-
                     Type type = field.getGenericType();
 
                     if (type instanceof ParameterizedType) {
@@ -63,12 +62,12 @@ public class SeonConfig {
                             ValueSerializer keySerializer = Serializers.getSerializer(types[0]),
                                     valueSerializer = Serializers.getSerializer(types[1]);
 
-                            if ((keySerializer == null && !isDefaultClass(types[0])) || (valueSerializer == null && !isDefaultClass(types[1]))) {
+                            if ((keySerializer == null && !isDefaultClass(types[0].getTypeName())) || (valueSerializer == null && !isDefaultClass(types[1].getTypeName()))) {
                                 continue;
                             }
 
                             Map<String, Object> configData = config.getMap(configName == null ? field.getName() : configName.value());
-                            Map map = new LinkedHashMap();
+                            Map map = (Map) value.getClass().newInstance();
 
                             for (Map.Entry<String, Object> entry : configData.entrySet()) {
                                 map.put(
@@ -76,7 +75,6 @@ public class SeonConfig {
                                         valueSerializer == null ? entry.getValue() : valueSerializer.deserializer(entry.getValue().toString())
                                 );
                             }
-                            field.set(data, map);
                         }
                     }
                 } else if (value instanceof Collection) {
@@ -88,12 +86,12 @@ public class SeonConfig {
                         if (types.length == 1) {
                             ValueSerializer serializer = Serializers.getSerializer(types[0]);
 
-                            if (serializer == null && !isDefaultClass(types[0])) {
+                            if (serializer == null && !isDefaultClass(types[0].getTypeName())) {
                                 continue;
                             }
 
                             Collection<String> configData = config.getStringList(configName == null ? field.getName() : configName.value());
-                            Collection list = new ArrayList();
+                            Collection list = (Collection) value.getClass().newInstance();
 
                             for (Object fv : configData) {
                                 list.add(serializer == null ? fv.toString() : serializer.deserializer(fv.toString()));
@@ -105,13 +103,13 @@ public class SeonConfig {
                 } else {
                     ValueSerializer serializer = Serializers.getSerializer(value);
 
-                    if (serializer == null && !isDefaultClass(value)) {
+                    if (serializer == null && !isDefaultClass(value.getClass().getPackage().getName())) {
                         continue;
                     }
 
                     Object configData = config.get(configName == null ? field.getName() : configName.value());
 
-                    field.set(data, serializer == null ? data : serializer.deserializer(configData.toString()));
+                    field.set(data, serializer == null ? configData : serializer.deserializer(configData.toString()));
                 }
             }
         }
@@ -120,7 +118,6 @@ public class SeonConfig {
         for (Field field : data.getClass().getDeclaredFields()) {
             if (field.getAnnotation(ConfigExclude.class) == null) {
                 field.setAccessible(true);
-
                 Object value = serializer(field, data);
 
                 if (value != null) {
@@ -148,9 +145,9 @@ public class SeonConfig {
                     ValueSerializer keySerializer = Serializers.getSerializer(types[0]),
                             valueSerializer = Serializers.getSerializer(types[1]);
 
-                    if (isDefaultClass(types[0]) && isDefaultClass(types[1])) {
+                    if (isDefaultClass(types[0].getTypeName()) && isDefaultClass(types[1].getTypeName())) {
                         return value;
-                    } else if ((keySerializer == null && !isDefaultClass(types[0])) || (valueSerializer == null && !isDefaultClass(types[1]))) {
+                    } else if ((keySerializer == null && !isDefaultClass(types[0].getTypeName())) || (valueSerializer == null && !isDefaultClass(types[1].getTypeName()))) {
                         return null;
                     }
 
@@ -177,7 +174,7 @@ public class SeonConfig {
                 if (types.length == 1) {
                     ValueSerializer serializer = Serializers.getSerializer(types[0]);
 
-                    if (!isDefaultClass(types[0])) {
+                    if (serializer == null && !isDefaultClass(types[0].getTypeName())) {
                         return null;
                     }
 
@@ -194,10 +191,10 @@ public class SeonConfig {
         } else if (Serializers.isRegistered(value)) {
             return Serializers.getSerializer(value).serializer(value);
         }
-        return isDefaultClass(value) ? value : null;
+        return isDefaultClass(value.getClass().getPackage().getName()) ? value : null;
     }
 
-    private boolean isDefaultClass(Object object) {
-        return object.getClass().getPackage().getName().equals("java.lang");
+    private boolean isDefaultClass(String name) {
+        return name.startsWith("java.lang");
     }
 }
