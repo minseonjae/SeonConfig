@@ -1,15 +1,12 @@
 package kr.codingtree.seonconfig;
 
-import kr.codingtree.seonconfig.section.CheckSection;
-import kr.codingtree.seonconfig.section.ConfigSection;
-import kr.codingtree.seonconfig.section.GetSection;
-import kr.codingtree.seonconfig.section.ListSection;
+import kr.codingtree.seonconfig.section.*;
 import lombok.Getter;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class MemoryConfig extends DefaultConfig implements ConfigSection, GetSection, CheckSection, ListSection {
+public abstract class MemoryConfig extends DefaultConfig implements ConfigSection, GetSection, CheckSection, ListSection, MapSection {
 
     @Getter
     protected HashMap<String, Object> values = new LinkedHashMap<>();
@@ -192,14 +189,14 @@ public abstract class MemoryConfig extends DefaultConfig implements ConfigSectio
     }
 
     @Override
-    public List<?> getList(String key, List<?> def) {
+    public List getList(String key, List def) {
         Object value = get(key);
-        return value != null && value instanceof List ? (List<?>) value : def;
+        return value != null && value instanceof List ? (List) value : def;
     }
     @Override
-    public List<?> getList(String key) {
+    public List getList(String key) {
         Object value = getDefault(key);
-        return getList(key, value != null && value instanceof List ? (List<?>) value : new ArrayList<>());
+        return getList(key, value != null && value instanceof List ? (List) value : new ArrayList<>());
     }
 
     @Override
@@ -362,6 +359,84 @@ public abstract class MemoryConfig extends DefaultConfig implements ConfigSectio
             }
         }
         return list;
+    }
+
+    @Override
+    public Map<String, Object> getMap(String key, Map<String, Object> def) {
+        HashMap<String, Object> map = organizedMap(values);
+        Object value = null;
+
+        if (key.contains(".")) {
+            String[] keySplit = key.split("\\.");
+
+            int i = 0;
+            while (i < keySplit.length - 1) {
+                value = map.get(keySplit[i]);
+
+                if (value != null && value instanceof Map) {
+                    map = (HashMap<String, Object>) value;
+                } else {
+                    break;
+                }
+                i++;
+            }
+
+            if (i == keySplit.length - 1) {
+                value = map.get(keySplit[keySplit.length - 1]);
+            }
+        } else {
+            value = map.get(key);
+        }
+        return value != null && value instanceof Map ? (Map<String, Object>) value : def;
+    }
+    @Override
+    public Map<String, Object> getMap(String key) {
+        Object value = getDefault(key);
+        return getMap(key, value != null && value instanceof Map ? (Map) value : new LinkedHashMap());
+    }
+
+    protected HashMap<String, Object> addDefaultValues(HashMap<String, Object> originalMap) {
+        HashMap<String, Object> map = new LinkedHashMap<>(originalMap);
+
+        defaults.forEach((key, value) -> {
+            if (!originalMap.containsKey(key)) {
+                map.put(key, value);
+            }
+        });
+
+        return map;
+    }
+
+    protected HashMap<String, Object> organizedMap(HashMap<String, Object> originalMap) {
+        HashMap<String, Object> map = new LinkedHashMap<>();
+
+        originalMap.forEach((key, value) -> {
+            if (key.contains(".")) {
+                String[] keySplit = key.split("\\.");
+
+                HashMap<String, Object> parent = null, child = null;
+
+                for (int i = 0; i < keySplit.length; i++) {
+                    String childName = keySplit[i];
+                    Object childObject = i < 1 ? map.get(childName) : child.get(childName);
+
+                    if (i < 1) {
+                        parent = (childObject == null ? new LinkedHashMap<>() : (HashMap<String, Object>) childObject);
+                        child = parent;
+                    } else if (i >= keySplit.length - 1) {
+                        child.put(childName, value);
+                        map.put(keySplit[0], parent);
+                    } else if (childObject instanceof HashMap || childObject == null) {
+                        HashMap<String, Object> tempChild = (childObject == null ? new LinkedHashMap<>() : (HashMap<String, Object>) childObject);
+                        child.put(childName, child = tempChild);
+                    }
+                }
+            } else {
+                map.put(key, value);
+            }
+        });
+
+        return map;
     }
 
     private Integer modifyInteger(Object value) {

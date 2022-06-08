@@ -4,8 +4,8 @@ import java.util.List;
 
 public interface ListSection {
 
-    List<?> getList(String key, List<?> def);
-    List<?> getList(String key);
+    List getList(String key, List def);
+    List getList(String key);
 
     List<String> getStringList(String key, List<String> def);
     List<String> getStringList(String key);
